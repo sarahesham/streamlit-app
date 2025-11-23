@@ -14,11 +14,24 @@ from playwright.sync_api import sync_playwright
 if not os.path.exists(os.path.expanduser("~/.cache/ms-playwright")):
     os.system("python -m playwright install")
 
+
+import os
 from playwright.sync_api import sync_playwright
 
-with sync_playwright() as p:
-    p.install()  # This downloads the browser binaries
+# Environment variable to specify browser path
+os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/tmp/ms-playwright"
 
+def install_browsers():
+    with sync_playwright() as p:
+        p.install()
+
+install_browsers()
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])
+    page = browser.new_page()
+    page.goto("https://example.com")
+    # continue your automation...
 
 # Fix for Windows Python 3.13+ asyncio subprocess issues
 # This must be set before any asyncio operations or imports that use asyncio
@@ -530,4 +543,5 @@ st.markdown("""
 </div>
 
 """, unsafe_allow_html=True)
+
 
