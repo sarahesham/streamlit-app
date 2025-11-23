@@ -7,32 +7,6 @@ import os
 from typing import Dict, Any, List
 from urllib.parse import urlparse
 
-import os
-from playwright.sync_api import sync_playwright
-
-# تثبيت Playwright browsers لو مش موجودين
-if not os.path.exists(os.path.expanduser("~/.cache/ms-playwright")):
-    os.system("python -m playwright install")
-
-
-import os
-from playwright.sync_api import sync_playwright
-
-# Environment variable to specify browser path
-os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/tmp/ms-playwright"
-
-def install_browsers():
-    with sync_playwright() as p:
-        p.install()
-
-install_browsers()
-
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])
-    page = browser.new_page()
-    page.goto("https://example.com")
-    # continue your automation...
-
 # Fix for Windows Python 3.13+ asyncio subprocess issues
 # This must be set before any asyncio operations or imports that use asyncio
 # WindowsProactorEventLoopPolicy supports subprocess operations (required by Playwright)
@@ -251,27 +225,11 @@ st.markdown("---")
 st.title("🎓 Course Extractor")
 st.markdown("Extract detailed course information from university websites")
 
-# Load API key - Try Streamlit secrets first, then .env file
-try:
-    # Try to get from Streamlit secrets (for Streamlit Cloud)
-    API_KEY = st.secrets.get("FIRECRAWL_API_KEY", None)
-except (AttributeError, FileNotFoundError, KeyError):
-    # Fallback to .env file (for local development)
-    load_dotenv()
-    API_KEY = os.getenv("FIRECRAWL_API_KEY")
-
+# Load API key
+load_dotenv()
+API_KEY = os.getenv("FIRECRAWL_API_KEY")
 if not API_KEY:
-    st.error("❌ FIRECRAWL_API_KEY not configured. Please set it in Streamlit secrets (for Cloud) or .env file (for local).")
-    st.info("""
-    **For Streamlit Cloud:**
-    1. Go to your app settings
-    2. Click on "Secrets"
-    3. Add: `FIRECRAWL_API_KEY = "your_api_key_here"`
-    
-    **For Local Development:**
-    1. Create a `.env` file in the project root
-    2. Add: `FIRECRAWL_API_KEY=your_api_key_here`
-    """)
+    st.error("❌ FIRECRAWL_API_KEY not set in .env file")
     st.stop()
 
 fc = FirecrawlClient(api_key=API_KEY)
@@ -302,10 +260,26 @@ with col2:
             with st.spinner("⏳ Running full pipeline extraction… This may take a few minutes."):
                 try:
                     st.info("⏳ Running extraction. Please wait...")
-                    count, pipeline_results = scrape_university_courses_sync(university_url.strip())
+                    count, pipeline_results, saved_path = scrape_university_courses_sync(university_url.strip())
                     st.success(f"Extracted {count} courses 🎉")
                     if pipeline_results:
                         st.info(f"✅ Found {len(pipeline_results)} unique course URLs")
+                        # csv_data = "\n".join(pipeline_results).encode("utf-8")
+
+                        # st.download_button(
+                        #     "Download CSV",
+                        #     csv_data,
+                        #     "course_links.csv",
+                        #     "text/csv"
+                        # )
+                        # Read the file after saving it
+                        with open(saved_path, "rb") as f:
+                            st.download_button(
+                                label="⬇️ Download CSV File",
+                                data=f.read(),
+                                file_name=os.path.basename(saved_path),
+                                mime="text/csv"
+                            )
                 except Exception as e:
                     st.error(f"💥 Error in extraction: {str(e)}")
                     st.exception(e)
@@ -541,7 +515,4 @@ st.markdown("""
     <p><strong>🚀 Powered by BoldStep.AI</strong></p>
     <p>Advanced Course Data Extraction Tool | Built with ❤️ using Streamlit</p>
 </div>
-
 """, unsafe_allow_html=True)
-
-
