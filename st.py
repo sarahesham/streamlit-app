@@ -14,6 +14,12 @@ from playwright.sync_api import sync_playwright
 if not os.path.exists(os.path.expanduser("~/.cache/ms-playwright")):
     os.system("python -m playwright install")
 
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    p.install()  # This downloads the browser binaries
+
+
 # Fix for Windows Python 3.13+ asyncio subprocess issues
 # This must be set before any asyncio operations or imports that use asyncio
 # WindowsProactorEventLoopPolicy supports subprocess operations (required by Playwright)
@@ -524,3 +530,4 @@ st.markdown("""
 </div>
 
 """, unsafe_allow_html=True)
+
