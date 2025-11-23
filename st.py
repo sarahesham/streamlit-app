@@ -7,6 +7,13 @@ import os
 from typing import Dict, Any, List
 from urllib.parse import urlparse
 
+import os
+from playwright.sync_api import sync_playwright
+
+# تثبيت Playwright browsers لو مش موجودين
+if not os.path.exists(os.path.expanduser("~/.cache/ms-playwright")):
+    os.system("python -m playwright install")
+
 # Fix for Windows Python 3.13+ asyncio subprocess issues
 # This must be set before any asyncio operations or imports that use asyncio
 # WindowsProactorEventLoopPolicy supports subprocess operations (required by Playwright)
@@ -515,4 +522,5 @@ st.markdown("""
     <p><strong>🚀 Powered by BoldStep.AI</strong></p>
     <p>Advanced Course Data Extraction Tool | Built with ❤️ using Streamlit</p>
 </div>
+
 """, unsafe_allow_html=True)
